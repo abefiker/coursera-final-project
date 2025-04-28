@@ -41,24 +41,40 @@ regd_users.post("/login", (req, res) => {
 regd_users.put("/auth/review/:isbn", (req, res) => {
     const { isbn } = req.params;
     const { review } = req.body;
-
     if (!review) {
         return res.status(400).json({ message: "Review content is required" });
     }
-
     const book = books[isbn];
-
     if (book) {
         // Add or update the review
         const username = req.session.authorization.username;
         book.reviews = book.reviews || {}; // Initialize if not present
         book.reviews[username] = review;
-
         return res.status(200).json({ message: "Review added/updated successfully", book });
     } else {
         return res.status(404).json({ message: "Book not found" });
     }
 });
+
+// Delete a book review
+regd_users.delete("/auth/review/:isbn", (req, res) => {
+    const { isbn } = req.params;
+    const username = req.session.authorization.username; // get the username from session
+
+    const book = books[isbn];
+
+    if (book) {
+        if (book.reviews && book.reviews[username]) {
+            delete book.reviews[username]; // delete that user's review
+            return res.status(200).json({ message: "Review deleted successfully", book });
+        } else {
+            return res.status(404).json({ message: "Review by user not found" });
+        }
+    } else {
+        return res.status(404).json({ message: "Book not found" });
+    }
+});
+
 
 module.exports.authenticated = regd_users;
 module.exports.isValid = isValid;
